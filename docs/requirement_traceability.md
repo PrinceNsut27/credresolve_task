@@ -1,0 +1,30 @@
+# Assignment Requirement Traceability Matrix
+
+**Project**: Collections Recovery Analytics Platform  
+**Phase**: 7 — Final Dashboard, Executive Memo & Production Analytics Architecture  
+**Status**: 100% COVERED (ALL REQUIREMENTS ACROSS ALL PHASES COMPLETE)  
+
+---
+
+## 1. Requirement Traceability Matrix
+
+| Requirement Area | Detailed Assignment Task | Deliverable / Artifact Location | Validation Status |
+| :--- | :--- | :--- | :--- |
+| **Phase 0: Discovery** | Profile all raw CSV files, schemas, row counts, and data dictionary | [`docs/data_inventory.md`](file:///c:/Users/Prince/Desktop/cred/docs/data_inventory.md) | **COMPLETE** |
+| **Phase 1: Data Quality**| Forensic deduplication, non-success payment exclusion, entity resolution | [`docs/data_quality_report.md`](file:///c:/Users/Prince/Desktop/cred/docs/data_quality_report.md), [`sql/02_cleaning.sql`](file:///c:/Users/Prince/Desktop/cred/sql/02_cleaning.sql) | **COMPLETE** |
+| **Phase 1: Golden Dataset**| Build Cartesian Spine (`account_id × analysis_month`, 240k rows), zero join explosion | [`docs/golden_dataset.md`](file:///c:/Users/Prince/Desktop/cred/docs/golden_dataset.md), [`data/golden/`](file:///c:/Users/Prince/Desktop/cred/data/golden/), [`sql/03_golden.sql`](file:///c:/Users/Prince/Desktop/cred/sql/03_golden.sql) | **COMPLETE** |
+| **Phase 2: Metrics** | Define Contact Rate, RPC, PTP Rate, PTP Kept Rate, Recovery per Account/Agent-Hour | [`docs/metrics_definitions.md`](file:///c:/Users/Prince/Desktop/cred/docs/metrics_definitions.md), [`analytics/monthly_recovery_metrics.csv`](file:///c:/Users/Prince/Desktop/cred/analytics/monthly_recovery_metrics.csv), [`sql/04_metrics.sql`](file:///c:/Users/Prince/Desktop/cred/sql/04_metrics.sql) | **COMPLETE** |
+| **Phase 2: 11% Claim Audit**| Independently audit the 11% MoM recovery claim across all metrics & calendar lengths | [`docs/11_percent_claim.md`](file:///c:/Users/Prince/Desktop/cred/docs/11_percent_claim.md), [`notebooks/analysis.ipynb`](file:///c:/Users/Prince/Desktop/cred/notebooks/analysis.ipynb) | **COMPLETE** |
+| **Phase 3: Driver Analysis**| Multidimensional driver analysis (DPD, product, risk, geography, agent tenure, attempt frequency) | [`docs/driver_analysis.md`](file:///c:/Users/Prince/Desktop/cred/docs/driver_analysis.md), [`analytics/driver_accounts_monthly.csv`](file:///c:/Users/Prince/Desktop/cred/analytics/driver_accounts_monthly.csv), [`sql/05_analysis.sql`](file:///c:/Users/Prince/Desktop/cred/sql/05_analysis.sql) | **COMPLETE** |
+| **Phase 3: Mix Decomposition**| Kitagawa shift-share decomposition separating Within-Group vs. Portfolio Mix effects | [`docs/driver_analysis.md`](file:///c:/Users/Prince/Desktop/cred/docs/driver_analysis.md), [`notebooks/analysis.ipynb`](file:///c:/Users/Prince/Desktop/cred/notebooks/analysis.ipynb) | **COMPLETE** |
+| **Phase 3: Statistical Modeling**| Multivariate logistic regression, odds ratios, p-values, 95% CIs, and Simpson's Paradox check | [`docs/statistical_analysis.md`](file:///c:/Users/Prince/Desktop/cred/docs/statistical_analysis.md), [`notebooks/analysis.ipynb`](file:///c:/Users/Prince/Desktop/cred/notebooks/analysis.ipynb) | **COMPLETE** |
+| **Phase 4: Counterfactual** | Build targeting counterfactual, quasi-experimental treatment/control, and incremental recovery scenarios | [`docs/targeting_counterfactual.md`](file:///c:/Users/Prince/Desktop/cred/docs/targeting_counterfactual.md), [`sql/06_counterfactual.sql`](file:///c:/Users/Prince/Desktop/cred/sql/06_counterfactual.sql) | **COMPLETE** |
+| **Phase 5: Investment Options**| Evaluate and rank candidate operational levers by evidence strength and ROI | [`docs/investment_options.md`](file:///c:/Users/Prince/Desktop/cred/docs/investment_options.md) | **COMPLETE** |
+| **Phase 5: ₹10 Cr Allocation**| Evidence-based budget allocation, 30/60/90-day execution plan, and governance model | [`docs/investment_recommendation.md`](file:///c:/Users/Prince/Desktop/cred/docs/investment_recommendation.md) | **COMPLETE** |
+| **Phase 5: Financial Model**| 12-month scenario modeling (Conservative, Base, Upside), break-even analysis, and payback periods | [`docs/financial_model.md`](file:///c:/Users/Prince/Desktop/cred/docs/financial_model.md), [`sql/07_investment_model.sql`](file:///c:/Users/Prince/Desktop/cred/sql/07_investment_model.sql) | **COMPLETE** |
+| **Phase 6: Lineage & Quality**| Data lineage architecture, final validation matrix, assumption register, and limitations | [`docs/data_lineage.md`](file:///c:/Users/Prince/Desktop/cred/docs/data_lineage.md), [`docs/final_data_validation.md`](file:///c:/Users/Prince/Desktop/cred/docs/final_data_validation.md), [`docs/assumptions.md`](file:///c:/Users/Prince/Desktop/cred/docs/assumptions.md), [`docs/limitations.md`](file:///c:/Users/Prince/Desktop/cred/docs/limitations.md) | **COMPLETE** |
+| **Phase 6: Master Notebook**| Complete, executed 15-section Jupyter notebook with rendered plots, tables, and narrative | [`notebooks/analysis.ipynb`](file:///c:/Users/Prince/Desktop/cred/notebooks/analysis.ipynb) | **COMPLETE** |
+| **Phase 6: Root README** | Comprehensive project overview, repository architecture, and reproducibility instructions | [`README.md`](file:///c:/Users/Prince/Desktop/cred/README.md) | **COMPLETE** |
+| **Phase 7: Executive Dashboard**| Production Streamlit interactive dashboard with KPI cockpit, claim panel, driver & ROI tabs | [`dashboard/app.py`](file:///c:/Users/Prince/Desktop/cred/dashboard/app.py), [`dashboard/README.md`](file:///c:/Users/Prince/Desktop/cred/dashboard/README.md) | **COMPLETE** |
+| **Phase 7: Executive Memo** | Senior-management C-level decision memo with ₹10 Cr allocation, risks, and 30/60/90 plan | [`docs/executive_memo.md`](file:///c:/Users/Prince/Desktop/cred/docs/executive_memo.md) | **COMPLETE** |
+| **Phase 7: Production Architecture**| Enterprise medallion lakehouse architecture, dbt semantic layer, Kafka streams, and SLAs | [`docs/production_architecture.md`](file:///c:/Users/Prince/Desktop/cred/docs/production_architecture.md) | **COMPLETE** |
