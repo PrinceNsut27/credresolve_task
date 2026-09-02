@@ -122,8 +122,39 @@ $$\Delta R = \sum \left( r_{i, \text{target}} - r_{i, \text{base}} \right) w_{i,
 
 ### 3.6 Telephony Vendors & Calling Schedules
 
-- **Telephony Carriers**: All 15 carrier vendors exhibit identical connection rates (**19.45% to 20.48%**) and RPC rates (**67.8% to 70.1%**). Vendor selection was not a differentiator in recovery performance.
-- **Calling Schedule**: Connection rates remain constant at **~19.6%–20.9%** across all 24 hours of the day and across all 7 days of the week, reflecting automated dialer pacing without time-of-day concentration.
+- **Telephony Carriers**: All 15 carrier vendors exhibit identical connection rates (**19.45% to 20.48%**) and RPC rates (**67.8% to 70.1%**). Vendor selection was not a differentiator in recovery performance (**FACT**).
+- **Calling Schedule**: Connection rates remain constant at **~19.6%–20.9%** across all 24 hours of the day and across all 7 days of the week, reflecting automated dialer pacing without time-of-day concentration (**FACT**).
+
+---
+
+### 3.7 Geography & Regional Performance
+- **State & City Distribution**: Collections recovery rates across top geographic clusters (Maharashtra, Karnataka, Delhi, Tamil Nadu, Telangana) range tightly between **7.65% and 7.85%** (**FACT**).
+- **Urban vs Rural**: Recovery per account is uniform across tiers (~₹5.8k/account yield), indicating geographic dispersion did not drive variance.
+
+---
+
+### 3.8 Campaign Strategy & Targeting Rules
+- **Campaign Strategies**: Spans 4 versions (`legacy`, `v1`, `v2`, `v3`) targeting `DPD>=60`, `HIGH_RISK`, `PROMISE_BROKEN`, `DPD>=30`, and `NPA`.
+- **Targeting Lift**: Actively targeted accounts achieve **7.84% recovery rate** vs **6.68%** for unreached organic controls (**+1.16% pts lift**) (**STRONG EVIDENCE**).
+
+---
+
+### 3.9 Channel Mix & Economics
+- **Channel Yield**: Voice accounts for 54% of attributed recovery, followed by WhatsApp (23%), SMS (13%), and Field Visits (10%) under 7-day last-touch attribution (**STRONG EVIDENCE**).
+- **Cost Differential**: WhatsApp and SMS cost <₹0.25/touch vs ₹250/hr for agent voice and ₹350/visit for field operations.
+
+---
+
+### 3.10 Missing Driver Disclosures (Fields Not Available in Schema)
+
+1. **Borrower Language (`language`)**:
+   - **Status**: **NOT AVAILABLE IN DATA**.
+   - **Reason**: `borrowers.csv` records borrower names, phones, emails, cities, and states, but lacks preferred language or dialect metadata.
+   - **Required Future Instrumentation**: Ingest IVR language selection trees, agent-tagged customer preferred language codes, or automated speech recognition (ASR) language classification tags.
+2. **Direct Lender / Client ID (`client_id`)**:
+   - **Status**: **NOT AVAILABLE IN DATA**.
+   - **Reason**: Schema groups accounts by credit facility `loan_type` (CREDIT_CARD, AUTO, PERSONAL, CONSUMER, BNPL) and payment `provider_id`. Direct enterprise lender originator IDs are not stored.
+   - **Required Future Instrumentation**: Add `lender_client_id` to `accounts.csv` metadata contract.
 
 ---
 
@@ -140,12 +171,14 @@ FINAL DRIVER SYNTHESIS: SUMMARY OF EVIDENCE
    - Daily recovery run-rate was completely flat (+0.29% change).
    - Overall cumulative growth across all 7 full months was +0.007% (flat).
    - Telephony connection rates (~20%) and vendor performance are invariant.
+   - DPD, Product, and Risk compositions remained static (0.0% mix shift).
 
 2. WHAT IS STRONGLY SUPPORTED (STRONG EVIDENCE):
    - Outreach frequency beyond 3 touches suffers severe diminishing returns.
    - Organic recovery represents ~54%–80% of collections depending on lookback window.
    - Shift-share decomposition confirms 0.0% mix effect; all variance was within-group.
    - Agent productivity is invariant across tenure tiers (~INR 111k/agent).
+   - Targeted campaign accounts outperform untargeted controls by +1.16% pts.
 
 3. WHAT IS CORRELATED (CORRELATION, NOT CAUSATION):
    - Accounts receiving 6-10 calls have lower recovery rates (5.08% vs 7.78%) due to
@@ -156,3 +189,4 @@ FINAL DRIVER SYNTHESIS: SUMMARY OF EVIDENCE
      could unlock higher recovery than brute-force voice retries.
 ================================================================================
 ```
+

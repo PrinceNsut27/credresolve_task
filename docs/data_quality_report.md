@@ -126,7 +126,30 @@ State transitions are ordered strictly by `event_at ASC`. Point-in-time account 
 
 ---
 
-## 3. Data Transformation & Pipeline Traceability
+---
+
+## 3. Systematic 12-Issue Forensic Audit Matrix
+
+Every potential data integrity failure cited in the forensic mandate was independently tested against empirical operational records. The table below classifies each issue, detailing detection methodology, evidence, treatment, and business impact.
+
+| # | Forensic Issue | Classification | Detection Method | Empirical Evidence | Standard Treatment | Business Impact |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Duplicate Payments** | **DETECTED** | Natural key (`account_id + amount + event_at`) and PK collision check | 486 exact dups; 500 duplicate `payment_id` pairs (1,000 rows); 346 duplicate SUCCESS txns totaling **₹25.90M** | Deduplicate strictly on `payment_id` keeping earliest settled record | Eliminates false revenue overstatement (+₹25.9M) |
+| **2** | **Incorrect Payment Attribution** | **DETECTED** | Multi-window lookback evaluation (1d, 3d, 7d, 14d, 30d) against 220k operational touches | Attributed share varies wildly from 3.24% (1d) to 59.78% (30d); 79.84% organic at 7d baseline | Persist multi-window attributes in Golden layer; standardize 7d baseline | Prevents unearned channel ROI claims (Voice gets 54% of attributed, 8.5% of total) |
+| **3** | **Timezone Inconsistencies** | **DETECTED** | Column frequency profiling across `accounts`, `calls`, `agent_sessions`, `vendor_telephony` | Distributed across `UTC` (33.7%), `Asia/Kolkata` (33.3%), `Asia/Dubai` (33.0%) | Normalize all operational event timestamps to unified ISO UTC/IST | Eliminates calendar boundary shifting and hour-of-day distortion |
+| **4** | **Telephony Vendor / Disposition Changes** | **DETECTED** | Cross-tabulation of `disposition_code` across `disposition_version` (legacy, v1, v2) | Code definitions (`PTP`, `CALLBACK`, `DISPUTE`, etc.) are stable across versions, but `PROMISE_TO_PAY` exists alongside `PTP` | Map `PROMISE_TO_PAY` to canonical `PTP`; classify meaningful contacts as `is_rpc = 1` | Standardizes Right Party Contact (RPC) and commitment tracking |
+| **5** | **Agent Identity Duplication** | **DETECTED** | Cardinality and collision check on `agents.csv` (`agent_id` vs `employee_code`) | 30,000 rows for exactly 1,000 unique `agent_id`s; 1,099 employee codes; 4,078 rows have `joined_at > updated_at` | Resolve canonical SCD by `ROW_NUMBER() OVER (PARTITION BY agent_id ORDER BY updated_at DESC) = 1` | Prevents 30x overstatement of workforce capacity and headcount |
+| **6** | **Portfolio Mix Changes** | **NOT DETECTED (INVESTIGATED)** | Longitudinal distribution audit of `loan_type`, `risk_segment`, `dpd` across 8 months | Loan products (~20% each), risk segments (~25% each), and DPD buckets (~25% each) remained constant across all months | Static master portfolio spine in Golden layer; Kitagawa shift-share decomposition | Confirms that portfolio mix shifts explain 0.0% of recovery variance |
+| **7** | **Denominator Manipulation** | **DETECTED (RISK MITIGATED)** | Comparison of fixed master portfolio (30k) vs daily targeted (23.3k) vs open active (9.9k–15.8k) | Open active delinquent denominator expands from 9.9k in Jan to 15.8k in Jul, creating false recovery rate drop (24% -> 15%) | Anchor macro recovery metrics strictly to the **Fixed 30,000 Master Portfolio** | Prevents artificial inflation or suppression of recovery rates |
+| **8** | **Late-Arriving Events & Inverted Timestamps** | **DETECTED** | Delta check between `event_at` (operational) and `recorded_at` (database commit) | In `account_status_history.csv`, 30,191 rows (50.32%) show `recorded_at < event_at` by up to 24 hours | Sequence account lifecycle states strictly by `event_at ASC` | Ensures accurate point-in-time account status reconstruction |
+| **9** | **Duplicate Calls / Events** | **DETECTED** | Exact row hashing and event PK collision check across event streams | 1,271 exact duplicate calls (2,700 total rows with duplicate `call_id`); 600 exact duplicate WhatsApp events | Deduplicate event tables on unique event PKs (`call_id`, `whatsapp_event_id`) | Prevents distortion of call volumes, agent handle times, and digital reach |
+| **10** | **Overwritten Historical Records** | **DETECTED** | Row-to-entity ratio audit in `borrowers.csv` and `agents.csv` | `borrowers.csv` contains 30,600 rows mapping to 11,015 IDs (multi-profile overwriting) | Deduplicate on `borrower_id` selecting latest `updated_at` | Preserves deterministic demographic and location assignment |
+| **11** | **Inconsistent IDs & Orphan Foreign Keys** | **DETECTED** | Referential integrity foreign key join audits between accounts/events and dimensions | `accounts.csv` contains 455 null `borrower_id`s; 897 borrower IDs in accounts missing from `borrowers.csv` | Impute missing borrower IDs with `UNKNOWN_BORROWER`; preserve 100% of account financials | Prevents loss of ₹ balance or accounts in downstream reporting |
+| **12** | **Changed Campaign Definitions** | **DETECTED** | Temporal audit of `campaigns.csv` across 4 `strategy_version`s (legacy, v1, v2, v3) | 120 campaigns across 5 targeting rules (`DPD>=60`, `HIGH_RISK`, `PROMISE_BROKEN`, `DPD>=30`, `NPA`) | Standardize campaign dimension linking `campaign_id` to targeting allocations | Enables rigorous campaign attribution and counterfactual modeling |
+
+---
+
+## 4. Data Transformation & Pipeline Traceability
 
 The table below summarizes the transition from Raw records to Clean and Golden layers across all 17 datasets.
 
@@ -153,9 +176,10 @@ The table below summarizes the transition from Raw records to Clean and Golden l
 
 ---
 
-## 4. Final Quality Assurance & Invariant Verification
+## 5. Final Quality Assurance & Invariant Verification
 
 - [x] **Raw CSV Data Unchanged**: All raw files in `data/` remain strictly unmodified with identical file hashes.
 - [x] **Zero Join Multiplication**: Joining operational touches and payments onto the `account_id × analysis_month` spine produced exactly **240,000 rows** with zero duplicate keys.
 - [x] **Exact Financial Reconciliation**: `golden_payments_attributed` total (₹1,315,583,964.64) equals `golden_accounts_monthly` payment sum with ₹0.00 difference.
 - [x] **Referential Integrity**: 100% of accounts and event records resolve against clean dimensions without orphaned primary keys.
+

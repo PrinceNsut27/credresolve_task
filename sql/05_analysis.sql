@@ -160,3 +160,52 @@ SELECT
 FROM golden_calls_clean
 GROUP BY vendor_id
 ORDER BY total_calls DESC;
+
+-- ==============================================================================
+-- 7. GEOGRAPHIC PERFORMANCE BREAKDOWN (STATE & CITY LEVEL)
+-- ==============================================================================
+CREATE OR REPLACE VIEW v_geography_performance AS
+SELECT 
+    borrower_state,
+    borrower_city,
+    COUNT(account_id) AS total_accounts,
+    SUM(has_success_payment) AS recovered_accounts,
+    ROUND(SUM(has_success_payment) * 100.0 / COUNT(account_id), 2) AS recovery_rate_pct,
+    SUM(success_payment_amount) AS total_recovered_amount,
+    ROUND(SUM(success_payment_amount) / COUNT(account_id), 2) AS recovery_per_account
+FROM v_driver_accounts_monthly
+GROUP BY borrower_state, borrower_city
+ORDER BY total_recovered_amount DESC;
+
+-- ==============================================================================
+-- 8. CALLING SCHEDULE & HOUR-OF-DAY PERFORMANCE BREAKDOWN
+-- ==============================================================================
+CREATE OR REPLACE VIEW v_calling_schedule_performance AS
+SELECT 
+    EXTRACT(HOUR FROM event_at) AS call_hour,
+    COUNT(call_id) AS total_calls,
+    SUM(CASE WHEN call_status = 'ANSWERED' THEN 1 ELSE 0 END) AS answered_calls,
+    ROUND(SUM(CASE WHEN call_status = 'ANSWERED' THEN 1 ELSE 0 END) * 100.0 / COUNT(call_id), 2) AS connection_rate_pct,
+    SUM(is_rpc) AS rpc_calls,
+    ROUND(SUM(is_rpc) * 100.0 / NULLIF(SUM(CASE WHEN call_status = 'ANSWERED' THEN 1 ELSE 0 END), 0), 2) AS rpc_rate_pct
+FROM golden_calls_clean
+GROUP BY EXTRACT(HOUR FROM event_at)
+ORDER BY call_hour ASC;
+
+-- ==============================================================================
+-- 9. CAMPAIGN STRATEGY PERFORMANCE BREAKDOWN
+-- ==============================================================================
+CREATE OR REPLACE VIEW v_campaign_strategy_performance AS
+SELECT 
+    c.strategy_version,
+    c.target_definition,
+    c.channel,
+    COUNT(DISTINCT c.campaign_id) AS total_campaigns,
+    COUNT(t.target_id) AS total_target_allocations,
+    SUM(CASE WHEN t.status = 'CONTACTED' THEN 1 ELSE 0 END) AS contacted_targets,
+    ROUND(SUM(CASE WHEN t.status = 'CONTACTED' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(t.target_id), 0), 2) AS contact_conversion_pct
+FROM clean_campaigns c
+LEFT JOIN clean_daily_targeting t ON c.campaign_id = t.campaign_id
+GROUP BY c.strategy_version, c.target_definition, c.channel
+ORDER BY total_target_allocations DESC;
+

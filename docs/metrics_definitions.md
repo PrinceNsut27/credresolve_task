@@ -128,26 +128,43 @@ This framework establishes the mathematical, operational, and structural definit
 - **Formula**:
   $$\text{MoM \% Change}_t = \frac{\text{Metric}_t - \text{Metric}_{t-1}}{\text{Metric}_{t-1}} \times 100$$
 
-### 3.10 Calendar-Day Normalized Daily Run-Rate
-- **Business Meaning**: Eliminates calendar length distortions (e.g. 28 days in Feb vs 31 days in Mar).
+### 3.11 Operational Cost Per ₹ Recovered
+- **Business Meaning**: Measures total operational expenditure (workforce + dialer carrier + digital messaging + field visits) required to collect ₹1.00 of net valid recovery.
+- **Numerator**: $\text{Total Operational Cost} = (\text{Agent Hours} \times ₹250) + (\text{Dialer Mins} \times ₹0.50) + (\text{WhatsApp Sent} \times ₹0.25) + (\text{SMS Sent} \times ₹0.15) + (\text{Field Visits} \times ₹350)$.
+- **Denominator**: Total Valid Recovery Amount (INR) in the month.
 - **Formula**:
-  $$\text{Daily Average Recovery}_t = \frac{\text{Valid Recovery Amount}_t}{\text{Calendar Days}_t}$$
-  $$\text{Daily Run-Rate MoM \% Change}_t = \frac{\text{Daily Recovery}_t - \text{Daily Recovery}_{t-1}}{\text{Daily Recovery}_{t-1}} \times 100$$
+  $$\text{Cost per ₹ Recovered} = \frac{\text{Total Operational Costs}}{\text{Valid Recovery Amount}}$$
+- **Potential Bias & Denominator Manipulation**: If failed/reversed payments are included in the denominator, the cost per rupee appears artificially low.
+- **Appropriateness**: Anchoring strictly to clean settled SUCCESS recovery reflects true economic collection cost.
+
+---
+
+### 3.12 Channel Conversion Rate
+- **Business Meaning**: Efficiency of each collection channel in directly producing settled recovery payments within the standardized 7-day lookback window.
+- **Numerator**: Total Net Valid Recovery Amount (or payment transaction count) attributed to Channel $C$ under the 7-day last-touch rule.
+- **Denominator**: Total Gross Operational Touches / Dispatches dispatched via Channel $C$.
+- **Formula**:
+  $$\text{Channel Yield per Touch} = \frac{\text{Attributed Recovery via Channel } C}{\text{Total Outbound Touches in Channel } C}$$
+- **Potential Bias**: Overly wide attribution windows (e.g. 30 days) claim unearned credit for organic customer self-cure payments.
+- **Appropriateness**: The 7-day window balances responsiveness with realistic consumer payment friction.
 
 ---
 
 ## 4. Summary Metric Governance Matrix
 
-| Metric Name | Numerator | Denominator | Unit | Standard Grain |
-| :--- | :--- | :--- | :--- | :--- |
-| **Omnichannel Contact Rate** | Contacted Accounts | Attempted Accounts | % | `account_id × analysis_month` |
-| **Voice Contact Rate** | Answered Voice Accounts | Dialed Accounts | % | `account_id × analysis_month` |
-| **RPC Rate** | Right Party Contact Accounts | Contacted Accounts | % | `account_id × analysis_month` |
-| **PTP Rate** | Promise to Pay Accounts | RPC Accounts | % | `account_id × analysis_month` |
-| **PTP Kept Rate** | Kept PTP Commitments | Total PTP Commitments | % | `ptp_id` aggregated monthly |
-| **Valid Recovery Amount** | Sum of Clean SUCCESS Payments | N/A | INR (₹) | `analysis_month` |
-| **Portfolio Recovery Rate** | Recovered Accounts | 30,000 Master Accounts | % | `analysis_month` |
-| **Recovery per Portfolio Account**| Valid Recovery Amount | 30,000 Master Accounts | INR (₹) | `analysis_month` |
-| **Recovery per Recovered Account**| Valid Recovery Amount | Recovered Accounts | INR (₹) | `analysis_month` |
-| **Recovery per Agent-Hour** | Valid Recovery Amount | Productive Agent Hours | INR/hr | `analysis_month` |
-| **Daily Average Recovery** | Valid Recovery Amount | Calendar Days in Month | INR/day | `analysis_month` |
+| Metric Name | Numerator | Denominator | Formula | Business Meaning | Potential Bias | Why Definition is Appropriate |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Omnichannel Contact Rate** | Contacted Accounts | Attempted Accounts | $\frac{\text{Contacted}}{\text{Attempted}} \times 100$ | Broad reach across all touchpoints | Inactive accounts excluded from attempt base | Accurately evaluates campaign dialer/dispatch reach |
+| **Voice Contact Rate** | Answered Voice Accounts | Dialed Accounts | $\frac{\text{Answered}}{\text{Dialed}} \times 100$ | Telephony live connection efficiency | Does not distinguish voicemail vs live person | Measures direct telephony carrier connection quality |
+| **RPC Rate** | Right Party Contact Accounts | Contacted Accounts | $\frac{\text{RPC}}{\text{Contacted}} \times 100$ | Ratio of contacts that reach the actual borrower | Wrong numbers falsely counted if unharmonized | Evaluates skip-tracing and contact data accuracy |
+| **PTP Rate** | Promise to Pay Accounts | RPC Accounts | $\frac{\text{PTP}}{\text{RPC}} \times 100$ | Negotiation conversion of live borrower conversations | Agent aggressiveness can create false PTPs | Direct measure of agent negotiation effectiveness |
+| **PTP Kept Rate** | Kept PTP Commitments | Total PTP Commitments | $\frac{\text{Kept PTP}}{\text{Total PTP}} \times 100$ | Realization / fulfillment rate of promises | Broken PTPs hidden if not tracked longitudinally | Evaluates commitment quality and borrower intent |
+| **Valid Recovery Amount** | Sum of Clean SUCCESS Payments | N/A | $\sum \text{amount}_{\text{clean success}}$ | True settled cash received in bank | Uncleaned data overstates recovery by +45.7% | Eliminates failed, pending, reversed, and duplicate rows |
+| **Portfolio Recovery Rate** | Recovered Accounts | 30,000 Master Accounts | $\frac{\text{Recovered Accounts}}{30,000} \times 100$ | True macro portfolio penetration | Shrinking denominator artificially inflates rate | Prevents denominator manipulation across all months |
+| **Recovery per Portfolio Account**| Valid Recovery Amount | 30,000 Master Accounts | $\frac{\text{Valid Recovery}}{30,000}$ | Average monetary recovery yield per loan | Skewed if inactive accounts are removed | Reflects macro portfolio cash generation |
+| **Recovery per Recovered Account**| Valid Recovery Amount | Recovered Accounts | $\frac{\text{Valid Recovery}}{\text{Recovered Accounts}}$ | Average ticket size of paying borrowers | High-value outliers can distort average | Isolates ticket-size shifts from account volume shifts |
+| **Recovery per Agent-Hour** | Valid Recovery Amount | Productive Agent Hours | $\frac{\text{Valid Recovery}}{\text{Total Agent Hours}}$ | Labor productivity of collections workforce | Overstated if non-voice digital recovery is credited | Evaluates workforce financial return per paid labor hour |
+| **Daily Average Recovery** | Valid Recovery Amount | Calendar Days in Month | $\frac{\text{Valid Recovery}}{\text{Calendar Days}}$ | True operational daily run-rate | 28-day Feb vs 31-day Mar creates +10.7% illusion | Eliminates calendar-day length distortion entirely |
+| **Cost per ₹ Recovered** | Total Operational Cost | Valid Recovery Amount | $\frac{\text{Total Cost}}{\text{Valid Recovery}}$ | Total collection expenditure per rupee collected | Fixed costs omitted if only variable cost is used | Provides true bottom-line unit economics |
+| **Channel Conversion** | Attributed Recovery | Total Channel Touches | $\frac{\text{Attributed Recovery}}{\text{Outbound Touches}}$ | Yield per channel intervention | Last-touch credit distortion across wide windows | Guides optimal channel mix allocation |
+

@@ -138,3 +138,62 @@ SELECT
     10.71 AS calendar_days_effect_pct,
     0.29 AS true_daily_run_rate_growth_pct,
     'PARTIALLY SUPPORTED (Single-Month Calendar Day Artifact)' AS audit_classification;
+
+-- ==============================================================================
+-- 4. CHANNEL ATTRIBUTION & CONVERSION RATES (7-DAY BASELINE LOOKBACK)
+-- ==============================================================================
+CREATE OR REPLACE VIEW v_channel_recovery_conversion AS
+SELECT 
+    attr_channel_7d AS channel,
+    COUNT(payment_id) AS total_payments,
+    SUM(amount) AS total_recovered_amount,
+    ROUND(SUM(amount) * 100.0 / (SELECT SUM(amount) FROM golden_payments_attributed), 2) AS recovery_share_pct,
+    ROUND(AVG(amount), 2) AS avg_ticket_size,
+    ROUND(AVG(attr_lag_hours_7d), 1) AS avg_attribution_lag_hours
+FROM golden_payments_attributed
+GROUP BY attr_channel_7d
+ORDER BY total_recovered_amount DESC;
+
+-- ==============================================================================
+-- 5. OPERATIONAL COST & EFFICIENCY PER ₹ RECOVERED
+-- ==============================================================================
+CREATE OR REPLACE VIEW v_operational_cost_per_rupee AS
+WITH monthly_costs AS (
+    SELECT 
+        m.analysis_month,
+        m.valid_recovery_amount,
+        m.agent_hours,
+        -- Standard Collections Industry Loaded Cost Benchmarks:
+        -- Agent Loaded Cost: INR 250 / productive hour
+        (m.agent_hours * 250.0) AS agent_workforce_cost,
+        -- Telephony Dialer Minutes: Total seconds / 60 * INR 0.50 / min
+        (SUM(c.duration_sec) / 60.0 * 0.50) AS telephony_carrier_cost,
+        -- WhatsApp Messages: INR 0.25 / template dispatch
+        (SUM(wa.whatsapp_sent) * 0.25) AS whatsapp_digital_cost,
+        -- SMS Dispatches: INR 0.15 / SMS
+        (SUM(sms.sms_sent) * 0.15) AS sms_digital_cost,
+        -- Field Operations Visits: INR 350 / physical visit
+        (SUM(fv.field_visits_count) * 350.0) AS field_operations_cost
+    FROM monthly_recovery_metrics m
+    LEFT JOIN clean_calls_view c ON m.analysis_month = SUBSTRING(CAST(c.event_at AS VARCHAR), 1, 7)
+    LEFT JOIN clean_whatsapp_events_view wa ON m.analysis_month = SUBSTRING(CAST(wa.event_at AS VARCHAR), 1, 7)
+    LEFT JOIN clean_sms_events_view sms ON m.analysis_month = SUBSTRING(CAST(sms.event_at AS VARCHAR), 1, 7)
+    LEFT JOIN clean_field_visits_view fv ON m.analysis_month = SUBSTRING(CAST(fv.event_at AS VARCHAR), 1, 7)
+    GROUP BY m.analysis_month, m.valid_recovery_amount, m.agent_hours
+)
+SELECT 
+    analysis_month,
+    valid_recovery_amount,
+    agent_workforce_cost,
+    telephony_carrier_cost,
+    whatsapp_digital_cost,
+    sms_digital_cost,
+    field_operations_cost,
+    (agent_workforce_cost + telephony_carrier_cost + whatsapp_digital_cost + sms_digital_cost + field_operations_cost) AS total_operational_cost,
+    ROUND((agent_workforce_cost + telephony_carrier_cost + whatsapp_digital_cost + sms_digital_cost + field_operations_cost) 
+          / NULLIF(valid_recovery_amount, 0), 4) AS cost_per_rupee_recovered,
+    ROUND(valid_recovery_amount 
+          / NULLIF((agent_workforce_cost + telephony_carrier_cost + whatsapp_digital_cost + sms_digital_cost + field_operations_cost), 0), 2) AS collections_roi_multiple
+FROM monthly_costs
+ORDER BY analysis_month ASC;
+

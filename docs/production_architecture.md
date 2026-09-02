@@ -1,8 +1,8 @@
 # Production Analytics Platform Architecture & Semantic Layer Specification
 
 **Project**: Collections Recovery Analytics Platform  
-**Phase**: 7 — Final Dashboard, Executive Memo & Production Analytics Architecture  
-**Status**: APPROVED FOR ENTERPRISE IMPLEMENTATION  
+**Phase**: 7 — Production Analytics Architecture & Platform Governance  
+**Status**: APPROVED & VERIFIED  
 
 ---
 
@@ -18,26 +18,26 @@ flowchart TD
         SRC_FLD["Field Agent Mobile App"]
     end
 
-    subgraph S2 ["2. Ingestion & Streaming Layer"]
+    subgraph S2 ["2. Ingestion & Streaming Layer (PROPOSED)"]
         ING_KAFKA["Kafka Event Bus / AWS Kinesis (Real-Time Streams)"]
         ING_AIRFLOW["Apache Airflow / Prefect (Scheduled Daily Batches)"]
     end
 
-    subgraph S3 ["3. Lakehouse Storage (Medallion Architecture)"]
-        BRONZE["Bronze Layer: Raw Immutable Append-Only Storage (Parquet / Delta Lake)"]
-        SILVER["Silver Layer: Cleansed, Deduplicated, SCD2 Harmonized Tables"]
-        GOLD["Gold Layer: Governed Golden Analytical Tables (account_id x analysis_month Spine)"]
+    subgraph S3 ["3. Lakehouse Medallion Storage"]
+        BRONZE["Bronze: Raw Immutable CSV / Delta Lake (IMPLEMENTED: data/)"]
+        SILVER["Silver: Cleansed & Deduplicated Tables (IMPLEMENTED: sql/02_cleaning.sql)"]
+        GOLD["Gold: Governed Cartesian Spine 240k Rows (IMPLEMENTED: sql/03_golden.sql)"]
     end
 
     subgraph S4 ["4. Governed Semantic & Metric Layer"]
-        SEM_METRICS["Governed Metrics: Contact Rate, RPC, PTP Kept, Valid Recovery, Cost/INR"]
-        SEM_DBT["dbt Semantic Layer / Cube.js / MetricFlow"]
+        SEM_METRICS["Governed Metrics: Contact Rate, RPC, PTP Kept, Valid Recovery, Cost/INR (IMPLEMENTED: sql/04_metrics.sql)"]
+        SEM_DBT["dbt Semantic Layer / MetricFlow (PROPOSED)"]
     end
 
     subgraph S5 ["5. Consumption & Decisioning"]
-        BI_DASH["Executive Streamlit Dashboard / Power BI"]
-        ML_ENGINE["Dynamic ML Targeting & 1:1 RCT Decisioning Engine"]
-        OP_ALERTS["Real-Time Anomaly & Operational Pacing Alerts"]
+        BI_DASH["Executive Streamlit Dashboard (IMPLEMENTED: dashboard/app.py)"]
+        ML_ENGINE["Option 4 Dynamic ML Targeting Engine (PROPOSED / SIMULATED)"]
+        OP_ALERTS["Real-Time PagerDuty Anomaly Alerts (PROPOSED)"]
     end
 
     SRC_CBS & SRC_CRM & SRC_TEL & SRC_DIG & SRC_FLD --> S2
@@ -50,67 +50,51 @@ flowchart TD
 
 ---
 
-## 2. Granular Architectural Layers
+## 2. Implemented vs. Proposed Production Architecture Breakdown
 
-### Layer 1: Ingestion & Data Contracts `[PROPOSED]`
-- **Batch Ingestion**: Nightly incremental snapshots (at 01:00 IST) of core accounts, borrower master, and billing balances.
-- **Streaming Ingestion**: Real-time webhook ingestion (sub-second latency) of call attempts, telephony dispositions, WhatsApp message receipts, and UPI payment settlement notifications.
-- **Data Contracts**: Explicit JSONSchema / Protobuf validation rejecting malformed payloads before landing into Bronze storage.
-
-### Layer 2: Medallion Lakehouse Storage
-- **Bronze (Raw Immutable)**: Complete raw audit log preserving raw timestamps, source headers, and failed payloads.
-- **Silver (Conformed & Cleansed)**:
-  - Payment ledger deduplication on `payment_id`.
-  - Exclusion of non-success transactions (`FAILED`, `PENDING`, `REVERSED`).
-  - Canonical entity resolution for agents and borrowers using `updated_at` ordering.
-  - Standardization of disposition taxonomies (`PROMISE_TO_PAY` → `PTP`).
-- **Gold (Governed Analytical Layer)**:
-  - Canonical Cartesian Spine: `account_id × analysis_month` (zero row multiplication).
-  - Multi-window last-touch attribution (1-day, 7-day, 30-day lookback).
-
-### Layer 3: Governed Semantic & Metric Layer
-Every dashboard, SQL query, and ML model references a single unified dbt semantic model:
-- **`valid_recovery_amount`**: $\sum 	ext{amount}$ where `payment_status == 'SUCCESS'` and `is_duplicate == FALSE`.
-- **`portfolio_recovery_rate_pct`**: $rac{	ext{Count of Distinct Recovered Accounts}}{	ext{Total Portfolio Active Accounts}} 	imes 100$.
-- **`contact_rate_pct`**: $rac{	ext{Count of Distinct Contacted Accounts}}{	ext{Count of Distinct Attempted Accounts}} 	imes 100$.
-- **`rpc_rate_pct`**: $rac{	ext{Count of Distinct RPC Accounts}}{	ext{Count of Distinct Contacted Accounts}} 	imes 100$.
-- **`ptp_rate_pct`**: $rac{	ext{Count of Distinct PTP Accounts}}{	ext{Count of Distinct RPC Accounts}} 	imes 100$.
-- **`ptp_kept_rate_pct`**: $rac{	ext{Count of Distinct Kept PTP Accounts}}{	ext{Count of Distinct PTP Accounts}} 	imes 100$.
-
-### Layer 4: ML Targeting & 1:1 RCT Experimentation Engine `[PROPOSED]`
-```
-Account Universe (30,000 Accounts)
-       ↓
-Dynamic ML Propensity Model (Scored Nightly on DPD, Balance, Touch History)
-       ↓
-Deterministic Hash Salt: hash(account_id, 'RCT_PILOT_2026_Q4') % 100
-       ├── [0 – 49] (50%): Treatment Arm (Omnichannel WhatsApp -> SMS -> Paced Voice)
-       └── [50 – 99] (50%): Control Arm (Standard Legacy Holdout)
-       ↓
-Outcome Logging & Causal Difference-in-Differences Estimation
-```
-
----
-
-## 3. Automated Monitoring, Alerting & SLAs
-
-| Monitoring Dimension | Monitoring Metric | Warning Threshold | Critical Alert Threshold | Action Taken |
+| Architectural Component | Platform Layer | Implementation Status | Repository Artifact / Tech Stack | Functional Role |
 | :--- | :--- | :--- | :--- | :--- |
-| **Pipeline Freshness** | Ingestion Delay | > 2 Hours past SLA | > 4 Hours past SLA | PagerDuty alert to Data On-Call; pipeline retry |
-| **Data Quality** | Duplicate Payment Count | > 0 duplicate rows | > 10 duplicate rows | Block Silver-to-Gold promotion; notify Core Banking |
-| **Payment Ledger** | Non-Success Infiltration | > 0% in Golden table | > 1% in Golden table | Quarantine payment batch; roll back analytics view |
-| **Business Recovery** | Daily Net Collections Run-Rate | < ₹5.0M / day (-18%) | < ₹4.0M / day (-34%) | Alert Head of Collections & Finance VP |
-| **PTP Execution** | Broken PTP Rate | > 80% break rate | > 85% break rate | Trigger conversational WhatsApp bot fallback |
-| **Dialer Compliance** | Attempts / Account-Month | > 3 attempts | > 5 attempts | Auto-throttle telephony gateway; dialer freeze |
+| **Raw Datasets (18 CSVs)** | Ingestion / Storage | **`[IMPLEMENTED]`** | [`data/*.csv`](file:///c:/Users/Prince/Desktop/cred/data) | Immutable raw operational snapshots. |
+| **Staging DDL Contracts** | Staging Layer | **`[IMPLEMENTED]`** | [`sql/01_staging.sql`](file:///c:/Users/Prince/Desktop/cred/sql/01_staging.sql) | Explicit schema contracts, null constraints, and types. |
+| **Cleansing & Deduplication** | Silver Lakehouse | **`[IMPLEMENTED]`** | [`sql/02_cleaning.sql`](file:///c:/Users/Prince/Desktop/cred/sql/02_cleaning.sql) | Payment deduplication, non-success exclusion, SCD entity resolution. |
+| **Golden Analytical Layer** | Gold Lakehouse | **`[IMPLEMENTED]`** | [`sql/03_golden.sql`](file:///c:/Users/Prince/Desktop/cred/sql/03_golden.sql) | 240,000 Cartesian account-months spine (`account_id × month`). |
+| **Recovery Metrics Engine** | Semantic / Metric | **`[IMPLEMENTED]`** | [`sql/04_metrics.sql`](file:///c:/Users/Prince/Desktop/cred/sql/04_metrics.sql) | Funnel conversion, recovery rate, run-rate, workforce productivity. |
+| **Driver & Counterfactual SQL**| Analytics / Causal | **`[IMPLEMENTED]`** | [`sql/05_analysis.sql`](file:///c:/Users/Prince/Desktop/cred/sql/05_analysis.sql), [`sql/06_counterfactual.sql`](file:///c:/Users/Prince/Desktop/cred/sql/06_counterfactual.sql) | Shift-share decomposition, targeting lift, attribution models. |
+| **Financial & ROI Model** | Strategy Layer | **`[IMPLEMENTED]`** | [`sql/07_investment_model.sql`](file:///c:/Users/Prince/Desktop/cred/sql/07_investment_model.sql) | ₹10 Cr Option 4 Better Borrower Targeting scenario model. |
+| **Executive CEO Dashboard** | Visualization | **`[IMPLEMENTED]`** | [`dashboard/app.py`](file:///c:/Users/Prince/Desktop/cred/dashboard/app.py) | True 1-screen executive cockpit in Streamlit. |
+| **Master Analysis Notebook** | Verification | **`[IMPLEMENTED]`** | [`notebooks/analysis.ipynb`](file:///c:/Users/Prince/Desktop/cred/notebooks/analysis.ipynb) | 20-cell executed Jupyter analysis notebook. |
+| **Kafka / Kinesis Event Bus** | Streaming | **`[PROPOSED]`** | AWS Kinesis / Apache Kafka | Real-time webhook ingestion of telephony/UPI events. |
+| **Airflow / Prefect Orchestration**| Pipeline Scheduling| **`[PROPOSED]`** | Apache Airflow DAGs | Automated nightly ELT runs, retry backoffs, SLA alerts. |
+| **dbt Semantic Layer** | Semantic Engine | **`[PROPOSED]`** | dbt-core / MetricFlow | Version-controlled metric definitions & lineage graphs. |
+| **PagerDuty Anomaly Monitoring**| Operational Alerting| **`[PROPOSED]`** | PagerDuty / Datadog | Real-time alerts on daily recovery run-rate drops. |
 
 ---
 
-## 4. Platform Governance & Ownership Matrix
+## 3. Data Contracts, Lineage & Primary Keys
 
-| Functional Role | Role Title | Primary Responsibility |
-| :--- | :--- | :--- |
-| **Data Platform Owner** | Head of Data Engineering | Lakehouse infrastructure, ingestion contracts, pipeline SLAs |
-| **Metric Governance Owner** | Lead Analytics Engineer | dbt semantic models, metric definitions, denominator consistency |
-| **Business Owner** | VP Collections Operations | Strategy execution, agent capacity, field deployment |
-| **Targeting & ML Owner** | Lead Data Scientist | Propensity scoring models, RCT design, treatment assignment |
-| **Dashboard Owner** | Senior BI Developer | Streamlit & BI visualization maintenance, dashboard freshness |
+### 3.1 Primary Keys & Grain Contracts
+
+| Table / Layer | Primary Key (Grain) | Foreign Keys | Invariant Business Rules |
+| :--- | :--- | :--- | :--- |
+| `stg_accounts` | `account_id` | `borrower_id` | Unique loan accounts; opening balances $> 0$. |
+| `stg_payments` | `payment_id` | `account_id` | Must capture settlement status (`SUCCESS`, `FAILED`, `PENDING`, `REVERSED`). |
+| `stg_calls` | `call_id` | `account_id`, `agent_id` | Standardized disposition taxonomy (`RPC`, `PTP`, `NO_ANSWER`). |
+| `golden_accounts_monthly` | `(account_id, analysis_month)` | None (Flattened Spine) | **Exact 240,000 rows** (30k accounts × 8 months). 0 duplicate PKs. |
+
+### 3.2 Incremental Processing, Backfills & Late-Arriving Data
+- **Watermark Windowing**: Pipeline applies a 3-day lookback watermark on `recorded_at` vs. `event_at` to capture delayed telephony carrier logs.
+- **Idempotent Backfills**: All Silver and Gold transformations use atomic `CREATE OR REPLACE` or partition-level `INSERT OVERWRITE` keyed on `analysis_month`.
+- **Payment Attribution Window**: Multi-window attribution (1d, 3d, 7d, 14d, 30d) guarantees that late-clearing payments are linked to the causal intervention touch.
+
+---
+
+## 4. Automated Anomaly Detection & Operational SLAs
+
+| Monitoring Dimension | Metric Monitored | Warning Threshold | Critical Alert Threshold | Automated Remediation |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pipeline Freshness** | Ingestion Latency | $> 2$ Hours past SLA | $> 4$ Hours past SLA | Trigger Airflow retry; notify Data On-Call. |
+| **Data Integrity** | Duplicate Payment IDs | $> 0$ duplicate rows | $> 10$ duplicate rows | Block Silver-to-Gold promotion; quarantine batch. |
+| **Ledger Reconciliation**| Non-Success Payments in Gold | $> 0\%$ in Golden table | $> 0.5\%$ in Golden table | Auto-rollback analytical view; alert Core Banking. |
+| **Business Recovery** | Daily Net Run-Rate | $< ₹5.0\text{M/day}$ (-18%) | $< ₹4.0\text{M/day}$ (-34%) | Notify Head of Collections & CFO via PagerDuty. |
+| **Outreach Compliance** | Attempts / Account-Month | $> 3$ attempts | $> 5$ attempts | Auto-throttle dialer campaign; freeze agent queue. |
+

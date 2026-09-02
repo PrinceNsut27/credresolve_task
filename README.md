@@ -1,8 +1,10 @@
 # Collections Recovery Performance Analytics & ₹10 Cr Investment Strategy
 
 **Author**: Antigravity Data Analytics Team  
-**Platform Version**: Production Analytical Release (Phases 0–6 Complete)  
+**Platform Version**: Production Analytical Release (Part 1 & Part 2 Complete)  
 **Golden Analytical Dataset**: `data/golden/golden_accounts_monthly.csv` (240,000 rows, Grain: `account_id × analysis_month`)  
+**Executive Memo**: [`docs/executive_memo.md`](file:///c:/Users/Prince/Desktop/cred/docs/executive_memo.md) (2-Page CEO Memo)  
+**Executive Dashboard**: [`dashboard/app.py`](file:///c:/Users/Prince/Desktop/cred/dashboard/app.py) (Streamlit One-Screen Cockpit)  
 
 ---
 
@@ -24,23 +26,50 @@ This repository contains the complete, production-grade analytical data platform
 4. **Targeting Counterfactual & Incremental Recovery**:
    - Accounts assigned to active campaigns outperform non-targeted organic controls by **+0.74% pts in recovery rate** and **+₹596/account in yield**, generating **+₹11.13M (+7.04%) in base incremental recovery**.
 5. **₹10.00 Crore Executive Investment Strategy**:
-   - **Strategic Recommendation**: **PILOT FIRST / INVEST WITH CONDITIONS**.
-   - **Phase 1 Pilot (Months 1–3: ₹2.50 Cr)**: Fund a 90-day 1:1 Randomized Controlled Trial (RCT) across 30,000 accounts to measure true causal elasticity.
+   - **Single Chosen Investment Area**: **OPTION 4: BETTER BORROWER TARGETING (100% of ₹10.00 Cr)**.
+   - **Strategic Guardrail**: **PILOT FIRST / INVEST WITH CONDITIONS**.
+   - **Phase 1 Pilot (Months 1–3: ₹2.50 Cr)**: Fund a 90-day 1:1 Randomized Controlled Trial (RCT) across 30,000 accounts to measure unconfounded causal elasticity (>93% statistical power).
    - **Phase 2 Scale (Months 4–12: ₹7.50 Cr)**: Release remaining budget upon demonstrating $\ge 3.50\%$ incremental recovery uplift.
-   - **Base-Case Financials**: **+₹7.61 Cr/year incremental recovery**, **15.8-month payback**, and **₹5.22 Cr net benefit over 2 years**.
+   - **Base-Case Financials**: **+₹7.61 Cr/year incremental recovery**, **15.8-month payback**, and **₹5.22 Cr net benefit over 2 years** (+52.2% 2-year ROI).
 
 ---
 
-## 2. Repository Architecture
+## 2. Repository Architecture & File Mapping
 
-- `data/`: Raw source CSV files (18 datasets, 639k rows, strictly untouched).
-- `data/clean/`: Sanitized, deduplicated, standardized operational tables.
-- `data/golden/`: Production Golden analytical tables (Cartesian spine, zero join explosion).
-- `analytics/`: Master monthly performance tables and driver datasets.
-- `sql/`: Production SQL pipeline scripts (`01_staging.sql` through `07_investment_model.sql`).
-- `dashboard/`: Interactive Streamlit executive dashboard (`app.py`, `README.md`).
-- `notebooks/analysis.ipynb`: Executed 15-section Jupyter notebook with rendered plots, tables, and narrative.
-- `docs/`: 18 comprehensive markdown technical, architectural, and business reports.
+```
+credresolve_task/
+├── data/
+│   ├── *.csv                                # 18 raw operational CSV files (639k rows, untouched)
+│   ├── clean/*.csv                          # Cleansed, deduplicated, SCD2-harmonized tables
+│   └── golden/golden_accounts_monthly.csv   # Master Cartesian analytical spine (240k rows)
+├── sql/
+│   ├── 01_staging.sql                       # Staging DDL contracts with explicit data types
+│   ├── 02_cleaning.sql                      # Entity resolution, deduplication, payment filtering
+│   ├── 03_golden.sql                        # Multi-window attribution & 240k Cartesian spine
+│   ├── 04_metrics.sql                       # Governed recovery, funnel, productivity & cost queries
+│   ├── 05_analysis.sql                      # Segment, driver, vendor, geography & attempt queries
+│   ├── 06_counterfactual.sql                # Targeting counterfactual & incremental lift queries
+│   └── 07_investment_model.sql              # ₹10 Cr Option 4 allocation & financial scenario model
+├── notebooks/
+│   └── analysis.ipynb                       # 24-cell executed master Jupyter analysis notebook
+├── dashboard/
+│   ├── app.py                               # Interactive Streamlit CEO One-Screen Cockpit
+│   └── requirements.txt                     # Dashboard dependencies
+├── docs/
+│   ├── executive_memo.md                    # 2-Page Executive Decision Memorandum for CEO
+│   ├── data_quality_report.md               # 12-Issue Forensic Matrix & -₹601.7M reconciliation
+│   ├── data_inventory.md                    # Exhaustive 18-dataset profiling & schema dictionary
+│   ├── golden_dataset.md                    # Technical spec of golden_accounts_monthly.csv
+│   ├── metrics_definitions.md               # Numerator/Denominator formulas, biases & rationales
+│   ├── 11_percent_claim.md                  # Mathematical audit of 11% claim & calendar artifact
+│   ├── driver_analysis.md                   # 13-dimension driver analysis & Kitagawa decomposition
+│   ├── statistical_analysis.md              # Multivariate Logit model & Simpson's paradox tests
+│   ├── targeting_counterfactual.md          # DiD, quasi-experimental counterfactual & RCT design
+│   ├── investment_recommendation.md         # Full ₹10 Cr Option 4 business case & ROI model
+│   ├── investment_options.md                # Comprehensive 6-option evaluation matrix
+│   └── production_architecture.md           # Implemented vs Proposed production lakehouse design
+└── README.md                                # Platform overview & execution guide
+```
 
 ---
 
@@ -57,5 +86,6 @@ streamlit run dashboard/app.py
 # Run sql/01_staging.sql through sql/07_investment_model.sql in PostgreSQL / Snowflake / BigQuery
 
 # 4. Review Key Executive Deliverables
-# Open docs/executive_memo.md and docs/production_architecture.md
+# Open docs/executive_memo.md and docs/investment_recommendation.md
 ```
+

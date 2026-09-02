@@ -29,49 +29,27 @@ SELECT
 FROM monthly_clean_baseline;
 
 -- ==============================================================================
--- 2. ₹10.00 CRORE INVESTMENT ALLOCATION TABLE
+-- 2. ₹10.00 CRORE SINGLE-CATEGORY INVESTMENT ALLOCATION TABLE (OPTION 4)
 -- ==============================================================================
 CREATE OR REPLACE TABLE investment_budget_allocation AS
 SELECT * FROM (
     SELECT 
-        1 AS lever_rank,
-        'Digital Omnichannel Orchestration (WhatsApp/SMS Pacing Engine)' AS investment_area,
-        3.50 AS allocation_inr_cr,
-        35.0 AS share_pct,
+        1 AS phase_id,
+        'Better Borrower Targeting (Phase 1 Pilot RCT & Model Foundation)' AS investment_area,
+        2.50 AS allocation_inr_cr,
+        25.0 AS share_pct,
+        'Months 1–3' AS deployment_timeline,
         'DERIVED' AS input_label,
-        'Scalable automated digital reminders and 1-click UPI links with near-zero marginal cost.' AS strategic_rationale
+        'Deploy 90-day 1:1 Randomized Controlled Trial across 30,000 accounts to measure true causal lift.' AS strategic_rationale
     UNION ALL
     SELECT 
         2,
-        'ML Dynamic Targeting Engine & Production RCT Platform',
-        2.50,
-        25.0,
-        'DERIVED',
-        'Account prioritization to capture +₹596/acct targeting spread and 1:1 randomized holdout testing.'
-    UNION ALL
-    SELECT 
-        3,
-        'PTP Fulfillment & Automated Settlement Gateway',
-        2.00,
-        20.0,
-        'OBSERVED',
-        'Automated reminders 24h prior to commitment date to recover broken PTPs (75% current break rate).'
-    UNION ALL
-    SELECT 
-        4,
-        'Dialer Pacing Optimization & Attempt Capping',
-        1.00,
-        10.0,
-        'OBSERVED',
-        'Predictive dialer rules capping attempts at 3 touches, eliminating diminishing returns (5.08% vs 7.78%).'
-    UNION ALL
-    SELECT 
-        5,
-        'Data Quality, Real-Time Ingestion & Forensic Auditing Pipeline',
-        1.00,
-        10.0,
-        'OBSERVED',
-        'Continuous data contracts preventing phantom financial reporting and reconciling bank settlements.'
+        'Better Borrower Targeting (Phase 2 Enterprise ML Decisioning & Auto-Pacing)',
+        7.50,
+        75.0,
+        'Months 4–12',
+        'SCENARIO',
+        'Scale dynamic ML propensity scoring, automated channel escalation, and attempt capping upon >=3.5% RCT proof.'
 ) alloc;
 
 -- ==============================================================================
@@ -111,5 +89,6 @@ SELECT
     10.00 AS required_breakeven_recovery_cr,
     ROUND(10.00 / 12.0, 2) AS required_monthly_recovery_cr,
     ROUND((100000000.00 / b.annualized_baseline_recovery) * 100, 2) AS breakeven_portfolio_uplift_pct,
-    'PILOT FIRST / INVEST WITH CONDITIONS' AS strategic_recommendation
+    'OPTION 4: BETTER BORROWER TARGETING (PILOT FIRST / INVEST WITH CONDITIONS)' AS strategic_recommendation
 FROM baseline_val b;
+
