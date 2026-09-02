@@ -1,6 +1,6 @@
 # Executive Decision Memorandum: Collections Recovery Optimization & ₹10 Cr Capital Strategy
 
-**To**: Chief Executive Officer & Board of Directors  
+**Prepared for**: CredResolve Leadership & Board of Directors  
 **From**: Head of Analytics & Recovery Strategy  
 **Date**: September 2, 2026  
 **Subject**: Empirical Audit of Recovery Performance, 11% Claim Verdict & ₹10.00 Cr Capital Allocation  
@@ -24,7 +24,7 @@
 ---
 
 ## 3. Is the 11% Month-on-Month Claim True?
-**Verdict: PARTIALLY SUPPORTED (CALENDAR ARTIFACT / SINGLE-MONTH ANOMALY)**.
+**Verdict: PARTIALLY TRUE (Calendar Artifact / Single-Month Anomaly)**.
 - **The Observation**: Valid collections did increase by **+11.03%** in March 2026 (₹188.91M) vs. February 2026 (₹170.14M).
 - **The Cause**: February had **28 days** while March had **31 days** (**+10.71% more operating days**).
 - **The Reality**: Daily average collections were **₹6.077M/day in Feb vs. ₹6.094M/day in Mar (+0.29% change)**. Performance immediately dropped by **-7.29% in April**. The 11% improvement was an illusion of the calendar.
